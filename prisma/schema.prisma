@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(USER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  events       Event[]       
+  participations Participation[]
+  reviews      Review[]
+
+  sentInvitations     Invitation[] @relation("SentInvites")
+  receivedInvitations Invitation[] @relation("ReceivedInvites")
+
+  payments     Payment[]
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Event {
+  id            Int           @id @default(autoincrement())
+  title         String
+  description   String
+  date          DateTime
+  time          String
+  venue         String
+  isPublic      Boolean       @default(true)
+  fee           Float         @default(0)
+  creatorId     Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+
+  creator       User          @relation(fields: [creatorId], references: [id])
+  participations Participation[]
+  reviews        Review[]
+  invitations    Invitation[]
+  payments       Payment[]
+}
+
+
+model Participation {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  status    Status   @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  rating    Int      
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+model Invitation {
+  id        Int      @id @default(autoincrement())
+  senderId  Int
+  receiverId Int
+  eventId   Int
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sender   User  @relation("SentInvites", fields: [senderId], references: [id])
+  receiver User  @relation("ReceivedInvites", fields: [receiverId], references: [id])
+  event    Event @relation(fields: [eventId], references: [id])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Payment {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  eventId    Int
+  amount     Float
+  method     PaymentMethod
+  status     PaymentStatus @default(PENDING)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+enum PaymentMethod {
+  STRIPE
+  SSLCOMMERZ
+  SHURJOPAY
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
