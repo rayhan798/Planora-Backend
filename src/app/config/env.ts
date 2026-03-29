@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import status from 'http-status';
 import AppError from '../errorHelpers/AppError';
 
+// Add environment variable validation and loading logic here. This will ensure that all required environment variables are present and correctly typed before the application starts.
+
 dotenv.config();
 
 interface EnvConfig {
