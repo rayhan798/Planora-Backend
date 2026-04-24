@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 80%; margin: 20px auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px; }
+        .header { background: #0074d4; color: white; padding: 10px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { padding: 20px; }
+        .button { display: inline-block; padding: 10px 20px; background: #0074d4; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { font-size: 12px; color: #777; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Payment Confirmation</h1>
+        </div>
+        <div class="content">
+            <p>Hi <strong><%= customerName %></strong>,</p>
+            <p>Thank you for your payment for the event: <strong><%= eventName %></strong>.</p>
+            <p>Your payment has been successfully processed. You can download your official invoice using the button below:</p>
+            
+            <a href="<%= invoiceUrl %>" class="button">Download Invoice (PDF)</a>
+            
+            <p>If you have any questions, feel free to contact us.</p>
+        </div>
+        <div class="footer">
+            <p>Sent by Planora Event Management System</p>
+        </div>
+    </div>
+</body>
+</html>
