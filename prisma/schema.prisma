@@ -13,22 +13,43 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String
-  role         Role          @default(USER)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                  Int          @id @default(autoincrement())
+  name                String
+  email               String       @unique
+  password            String
+  role                Role         @default(USER)
+  status              UserStatus   @default(ACTIVE)
+  isDeleted           Boolean      @default(false)
+  emailVerified       Boolean      @default(false)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  bio                 String?
+  image               String?
+  emailEnabled        Boolean      @default(true)
+  pushEnabled         Boolean      @default(false)
+  smsEnabled          Boolean      @default(true)
+  verificationCode    String?
+  verificationExpires DateTime?
 
-  events       Event[]       
-  participations Participation[]
-  reviews      Review[]
+  
+  events              Event[]    
 
-  sentInvitations     Invitation[] @relation("SentInvites")
-  receivedInvitations Invitation[] @relation("ReceivedInvites")
+ 
+  createdParticipations Participation[] @relation("ParticipationCreator")
+  userParticipations    Participation[] @relation("ParticipationUser")
 
-  payments     Payment[]
+
+  createdReviews      Review[]        @relation("ReviewCreator")
+  userReviews         Review[]        @relation("ReviewUser")
+
+
+  sentInvitations     Invitation[]    @relation("SentInvites")
+  receivedInvitations Invitation[]    @relation("ReceivedInvites")
+  createdInvitations  Invitation[]    @relation("InvitationCreator")
+
+
+  userPayments        Payment[]       @relation("PaymentUser")
+  createdPayments     Payment[]       @relation("PaymentCreator")
 }
 
 enum Role {
@@ -36,38 +57,64 @@ enum Role {
   USER
 }
 
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
 model Event {
-  id            Int           @id @default(autoincrement())
-  title         String
-  description   String
-  date          DateTime
-  time          String
-  venue         String
-  isPublic      Boolean       @default(true)
-  fee           Float         @default(0)
-  creatorId     Int
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
 
+  time      String
+  venue     String
+  image     String?
+  isPublic  Boolean  @default(true)
+  fee       Float    @default(0)
+  creatorId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int?
+  totalSeats  Int      @default(0)
+  bookedSeats Int      @default(0)
 
-  creator       User          @relation(fields: [creatorId], references: [id])
+  creator        User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   participations Participation[]
   reviews        Review[]
   invitations    Invitation[]
   payments       Payment[]
 }
 
-
-model Participation {
+model ContactMessage {
   id        Int      @id @default(autoincrement())
-  userId    Int
-  eventId   Int
-  status    Status   @default(PENDING)
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("PENDING")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user  User  @relation(fields: [userId], references: [id])
-  event Event @relation(fields: [eventId], references: [id])
+  @@map("contact_messages")
+}
+
+model Participation {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  eventId       Int
+  status        Status   @default(PENDING)
+  paymentStatus String   @default("UNPAID")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  creatorId     Int
+
+  creator User @relation("ParticipationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  user    User @relation("ParticipationUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 enum Status {
@@ -76,32 +123,37 @@ enum Status {
   REJECTED
 }
 
-
 model Review {
   id        Int      @id @default(autoincrement())
   userId    Int
   eventId   Int
-  rating    Int      
-  comment   String
+  rating    Int
+  comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  creatorId Int
 
-  user  User  @relation(fields: [userId], references: [id])
-  event Event @relation(fields: [eventId], references: [id])
+  creator User @relation("ReviewCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  user    User @relation("ReviewUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Invitation {
-  id        Int      @id @default(autoincrement())
-  senderId  Int
+  id         Int          @id @default(autoincrement())
+  senderId   Int
   receiverId Int
-  eventId   Int
-  status    InviteStatus @default(PENDING)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  eventId    Int
+  creatorId  Int 
+  status     InviteStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
-  sender   User  @relation("SentInvites", fields: [senderId], references: [id])
-  receiver User  @relation("ReceivedInvites", fields: [receiverId], references: [id])
-  event    Event @relation(fields: [eventId], references: [id])
+  sender   User @relation("SentInvites", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedInvites", fields: [receiverId], references: [id], onDelete: Cascade)
+  creator  User @relation("InvitationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 enum InviteStatus {
@@ -111,17 +163,22 @@ enum InviteStatus {
 }
 
 model Payment {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  eventId    Int
-  amount     Float
-  method     PaymentMethod
-  status     PaymentStatus @default(PENDING)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                 Int           @id @default(autoincrement())
+  transactionId      String        @unique 
+  invoiceUrl         String?       
+  paymentGatewayData Json?        
+  userId             Int
+  eventId            Int
+  creatorId          Int
+  amount             Float
+  method             PaymentMethod
+  status             PaymentStatus @default(PENDING)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-  user  User  @relation(fields: [userId], references: [id])
-  event Event @relation(fields: [eventId], references: [id])
+  user    User  @relation("PaymentUser", fields: [userId], references: [id], onDelete: Cascade)
+  creator User  @relation("PaymentCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 enum PaymentMethod {
