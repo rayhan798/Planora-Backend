@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN     "bookedSeats" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "totalSeats" INTEGER NOT NULL DEFAULT 0;

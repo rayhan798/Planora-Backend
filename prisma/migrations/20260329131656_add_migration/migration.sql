@@ -2,6 +2,9 @@
 CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
 
 -- CreateEnum
+CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'BLOCKED', 'DELETED');
+
+-- CreateEnum
 CREATE TYPE "Status" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateEnum
@@ -20,6 +23,9 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'USER',
+    "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -49,6 +55,7 @@ CREATE TABLE "Participation" (
     "userId" INTEGER NOT NULL,
     "eventId" INTEGER NOT NULL,
     "status" "Status" NOT NULL DEFAULT 'PENDING',
+    "paymentStatus" TEXT NOT NULL DEFAULT 'UNPAID',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
