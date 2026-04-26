@@ -35,7 +35,7 @@ export const checkAuth =
         }
         throw new AppError(
           status.UNAUTHORIZED,
-          "Unauthorized! No token provided.",
+          "Unauthorized! Please Login.",
         );
       }
 

@@ -10,5 +10,7 @@ node_modules
 /dist
 /build
 /src/generated
-.vercel
-
+/vercel
+/vercel.json
+/scripts
+/tsup.config.ts
